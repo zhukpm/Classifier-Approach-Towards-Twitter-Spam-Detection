@@ -158,7 +158,7 @@ def import_user_data(user_file, tweet_file):
                                           float(re.split(r'\t+', user_info)[6]), float(re.split(r'\t+', user_info)[7][:-1]))
             twitter_users.append(twitter_user_ob)
 
-    with open(tweet_file) as f2:
+    with open(tweet_file, encoding='utf-8') as f2:
         all_user_tweets = f2.readlines()
         for line_tweets_info in all_user_tweets:
             for twitter_user in twitter_users:
@@ -227,15 +227,29 @@ def build_feature_matrix(twitter_users):
 predictUsers = []
 def appendToUsers(predictThis):
     for i in predictThis:
-	predictUsers.append(i.user_id)
+        predictUsers.append(i.user_id)
 
+
+def refomat_new_lines(filename):
+    print(filename)
+    with open(filename, "rt", encoding='utf-8') as fh:
+        content = fh.read().replace('\r', '')
+    print(content[:3])
+    with open(filename + '_new', "wt", encoding='utf-8') as fh:
+        fh.write(content)
+    print('OK!')
 
 
 if os.path.isfile("training_labels.dat") and os.path.isfile("training_features_matrix.dat") and os.path.isfile("testing_labels.dat") and os.path.isfile("testing_features_matrix.dat"):
-    training_labels = pickle.load(open("training_labels.dat", "r"))
-    training_features = pickle.load(open("training_features_matrix.dat", "r"))
-    testing_labels = pickle.load(open("testing_labels.dat", "r"))
-    testing_features = pickle.load(open("testing_features_matrix.dat", "r"))
+
+    # for filename in ["training_labels.dat", "training_features_matrix.dat",
+    #                  "testing_labels.dat", "testing_features_matrix.dat"]:
+    #     refomat_new_lines(filename)
+
+    training_labels = pickle.load(open("training_labels.dat_new", "rb"), encoding = 'bytes')
+    training_features = pickle.load(open("training_features_matrix.dat_new", "rb"), encoding = 'bytes')
+    testing_labels = pickle.load(open("testing_labels.dat_new", "rb"), encoding = 'bytes')
+    testing_features = pickle.load(open("testing_features_matrix.dat_new", "rb"), encoding = 'bytes')
     testing_legit = import_user_data("Testing_data/legitimate_users1.txt", "Testing_data/legitimate_users_tweets.txt")
     testing_spammers = import_user_data("Testing_data/spammers1.txt", "Testing_data/spammers_tweets.txt")
     appendToUsers(testing_legit)
@@ -297,18 +311,20 @@ def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.BuPu):
 ####################################################################
 def select_classifier(algo, label):
     model = algo
-    model.fit(training_features, training_labels)
+    print(training_features)
+    print(training_labels)
+    model.fit(training_features, np.array(training_labels))
     expected = testing_labels
     predicted = model.predict(testing_features)
     count = 0
     for predict in predicted:
-	count+=1
-	if(predict == 0):
-		print(predictUsers[count - 1]),
-		print("is a spammer")
-	else: 
-		print(predictUsers[count - 1]),
-		print("is a not spammer")
+        count+=1
+        if(predict == 0):
+            print(predictUsers[count - 1]),
+            print("is a spammer")
+        else:
+            print(predictUsers[count - 1]),
+            print("is a not spammer")
     print("----------------------------------------------------")
     print("|               Classification Report              |")
     print("----------------------------------------------------")
